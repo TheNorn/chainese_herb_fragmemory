@@ -5,6 +5,7 @@ import 'package:chinese_herb_app/pages/home_page.dart';
 import 'package:chinese_herb_app/pages/learn_page.dart';
 import 'package:chinese_herb_app/pages/review_page.dart';
 import 'package:chinese_herb_app/pages/detail_page.dart';
+import 'package:chinese_herb_app/pages/splash_page.dart'; // 导入自定义 GIF 动画开屏页
 import 'package:chinese_herb_app/services/study_service.dart';
 
 void main() {
@@ -32,11 +33,38 @@ class AppState extends ChangeNotifier {
   }
 }
 
-class MyApp extends StatelessWidget {
+/// 应用主入口，负责显示开屏动画和主路由
+class MyApp extends StatefulWidget {
   MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _showSplash = true; // 是否显示开屏动画
+
+  @override
+  void initState() {
+    super.initState();
+    // 延时 2.5 秒后关闭 splash，显示主页面
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      setState(() {
+        _showSplash = false;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_showSplash) {
+      // 显示 GIF 动画开屏页
+      return const MaterialApp(
+        home: SplashPage(),
+        debugShowCheckedModeBanner: false,
+      );
+    }
+    // 显示主应用（带路由）
     return MaterialApp.router(
       title: '中药速记',
       theme: ThemeData(
@@ -44,9 +72,11 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       routerConfig: _router,
+      debugShowCheckedModeBanner: false,
     );
   }
 
+  // 主路由配置，包含首页和详情页
   final GoRouter _router = GoRouter(
     routes: [
       GoRoute(
@@ -66,6 +96,7 @@ class MyApp extends StatelessWidget {
   );
 }
 
+/// 主页面，包含底部导航栏
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 

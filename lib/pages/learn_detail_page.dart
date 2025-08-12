@@ -20,16 +20,56 @@ class LearnDetailPage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start, // 保证左对齐
           children: [
-            Text(
-              herb.name,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            // 标题：中药名，居中显示
+            Center(
+              child: Text(
+                herb.name,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
-            const SizedBox(height: 16),
-            Text('功效: ${herb.effect}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 32), // 空两行
+            // 功效，内容加粗且左对齐
+            Text.rich(
+              TextSpan(
+                text: '功效: ',
+                style: const TextStyle(fontSize: 18),
+                children: [
+                  TextSpan(
+                    text: herb.effect,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.left,
+            ),
             const SizedBox(height: 8),
-            Text('性味归经: ${herb.taste}', style: const TextStyle(fontSize: 18)),
+            // 性味归经，内容加粗且左对齐
+            Text.rich(
+              TextSpan(
+                text: '性味归经: ',
+                style: const TextStyle(fontSize: 18),
+                children: [
+                  TextSpan(
+                    text: herb.taste,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.left,
+            ),
             const Spacer(),
             Padding(
               // 留出与卡片边缘的空隙

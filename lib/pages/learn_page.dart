@@ -81,22 +81,38 @@ class _LearnPageState extends State<LearnPage> {
           margin: const EdgeInsets.all(32),
           child: SizedBox(
             width: double.infinity,
-            height: 300,
+            height: 400,
             child: Padding(
               // UI调整：整体内容与卡片边缘留出距离
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // ...existing code...
                   Center(
-                    child: Text(
-                      herb.name,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          herb.name,
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        // 新增：大问号
+                        const SizedBox(height: 16),
+                        const Text(
+                          '?',
+                          style: TextStyle(
+                            fontSize: 128, // 32 * 4 = 128
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  // ...existing code...
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
