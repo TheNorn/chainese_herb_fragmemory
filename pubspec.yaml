@@ -43,7 +43,7 @@ dependencies:
 
 
 
-dev_dependencies:flutter pub get
+dev_dependencies:
   flutter_test:
     sdk: flutter
   # The "flutter_lints" package below包含推荐的代码规范
