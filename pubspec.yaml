@@ -59,7 +59,7 @@ flutter:
   # 新增/修改 assets 配置，注册你的 json 文件和 GIF 启动动画
   assets:
     - assets/data/herbs.json
-    - assets/splash.gif  # 你的 GIF 路径，需将 splash.gif 放到 assets 目录下
+    #- assets/splash.gif  # 你的 GIF 路径，需将 splash.gif 放到 assets 目录下
 
 
 
