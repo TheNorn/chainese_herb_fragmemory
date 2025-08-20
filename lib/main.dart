@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_bugly/flutter_bugly.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chinese_herb_framery/pages/home_page.dart';
 import 'package:chinese_herb_framery/pages/learn_page.dart';
@@ -9,13 +10,13 @@ import 'package:chinese_herb_framery/pages/splash_page.dart'; // 导入自定义
 import 'package:chinese_herb_framery/services/study_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  FlutterBugly.init(androidAppId: "", iOSAppId: "57d56b24d6");
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppState()),
-        ChangeNotifierProvider(
-          create: (_) => StudyService()..init(),
-        ), // Initialize StudyService here
+        ChangeNotifierProvider(create: (_) => StudyService()..init()),
       ],
       child: MyApp(),
     ),
