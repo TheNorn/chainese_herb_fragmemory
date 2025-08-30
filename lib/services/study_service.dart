@@ -6,19 +6,14 @@ import 'herb_service.dart';
 //import '../models/review_schedule.dart';
 import 'dart:math';
 import 'dart:convert';
-import '../utils/ebbinghaus.dart';
 
 class StudyService extends ChangeNotifier {
   List<Herb> _allHerbs = [];
   final List<StudyRecord> _records = [];
   List<Herb> _todayTasks = [];
-  List<Herb> _todayReviews = [];
   int dailyTaskCount = 10;
   String? categoryFilter;
   DateTime? _todayDate; // 记录今日任务生成日期
-
-  // 第二次修改：新增复习池持久化
-  List<int> _reviewPool = [];
 
   StudyService() {
     init();
@@ -31,13 +26,10 @@ class StudyService extends ChangeNotifier {
     await _loadRecords(); // 加载本地学习记录
     _allHerbs = await HerbService().loadHerbs();
     await _loadTodayTasks(); // 第一次修改：加载今日任务池
-    // 第二次修改：加载复习池
-    await _loadReviewPool();
     if (_todayTasks.isEmpty) {
       _generateTodayTasksIfNeeded(force: true);
       await _saveTodayTasks(); // 第一次修改：首次生成后保存
     }
-    _generateTodayReviews();
     notifyListeners();
   }
 
@@ -106,51 +98,14 @@ class StudyService extends ChangeNotifier {
     }
   }
 
-  /// 第二次修改：保存复习池到本地
-  Future<void> _saveReviewPool() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-      'review_pool',
-      _reviewPool.map((id) => id.toString()).toList(),
-    );
-  }
-
-  /// 第二次修改：加载复习池
-  Future<void> _loadReviewPool() async {
-    final prefs = await SharedPreferences.getInstance();
-    final ids = prefs.getStringList('review_pool');
-    if (ids != null) {
-      _reviewPool = ids.map(int.parse).toList();
-    }
-  }
-
-  /// 第二次修改：将herb加入复习池
-  Future<void> addToReviewPool(int herbId) async {
-    if (!_reviewPool.contains(herbId)) {
-      _reviewPool.add(herbId);
-      await _saveReviewPool();
-    }
-  }
-
-  /// 第二次修改：移除复习池
-  Future<void> removeFromReviewPool(int herbId) async {
-    _reviewPool.remove(herbId);
-    await _saveReviewPool();
-  }
-
   /// 清空学习记录
   Future<void> clearRecords() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('study_records');
     await prefs.remove('today_tasks'); // 第一次修改：清空今日任务池
-    // 第二次修改：清空复习池
-    await prefs.remove('review_pool');
     _records.clear();
     _todayTasks.clear(); // 第一次修改：清空内存中的今日任务池
-    // 第二次修改：清空内存中的复习池
-    _reviewPool.clear();
     _generateTodayTasksIfNeeded(force: true);
-    _generateTodayReviews();
     notifyListeners();
   }
 
@@ -162,14 +117,11 @@ class StudyService extends ChangeNotifier {
       // 生成今日任务池
       List<Herb> filteredHerbs = _allHerbs;
       if (categoryFilter != null && categoryFilter!.isNotEmpty) {
-        filteredHerbs = _allHerbs
-            .where((herb) => herb.category == categoryFilter)
-            .toList();
+        filteredHerbs =
+            _allHerbs.where((herb) => herb.category == categoryFilter).toList();
       }
-      final masteredIds = _records
-          .where((r) => r.mastered)
-          .map((r) => r.herbId)
-          .toSet();
+      final masteredIds =
+          _records.where((r) => r.mastered).map((r) => r.herbId).toSet();
       filteredHerbs = filteredHerbs
           .where((herb) => !masteredIds.contains(herb.id))
           .toList();
@@ -184,55 +136,17 @@ class StudyService extends ChangeNotifier {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  /// 第二次修改：生成今日复习池，结合艾宾浩斯算法和复习池持久化
-  void _generateTodayReviews() {
+  // 获取今日学习池，自动检测日期，跨天自动重置
+  List<Herb> get todayTasks {
     final now = DateTime.now();
-    _todayReviews = _reviewPool
-        .map((herbId) {
-          final record = _records.firstWhere(
-            (r) => r.herbId == herbId,
-            orElse: () => StudyRecord(
-              herbId: herbId,
-              mastered: false,
-              reviewCount: 0,
-              lastStudied: DateTime(2000), // 或其它合适的默认值
-            ),
-          );
-          // if (record == null || record.mastered) return null;
-          // 计算下次复习日期
-          final nextReviewDate = Ebbinghaus.getNextReviewDate(
-            record.reviewCount - 1,
-            record.lastStudied,
-          );
-          // 如果今天 >= 下次复习日期，则需要复习
-          // ...existing code...
-          if (!now.isBefore(
-            DateTime(
-              nextReviewDate.year,
-              nextReviewDate.month,
-              nextReviewDate.day,
-            ),
-          )) {
-            return _allHerbs.firstWhere(
-              (h) => h.id == herbId,
-              orElse: () => Herb(
-                id: -1,
-                name: '未知中药',
-                category: '',
-                effect: '',
-                taste: '',
-                image: '',
-              ),
-            );
-          }
-          // ...existing code...
-        })
-        .whereType<Herb>()
-        .toList();
+    if (!_isSameDay(_todayDate, now)) {
+      _generateTodayTasksIfNeeded(force: true);
+      _saveTodayTasks();
+      notifyListeners();
+    }
+    return _todayTasks;
   }
 
-  List<Herb> get todayTasks => _todayTasks;
-  List<Herb> get todayReviews => _todayReviews;
   List<Herb> get allHerbs => _allHerbs;
 
   int get masteredCount => _records.where((r) => r.mastered).length;
@@ -262,12 +176,6 @@ class StudyService extends ChangeNotifier {
       );
     }
 
-    // 第二次修改：如果彻底掌握，移出复习池
-    if (mastered) {
-      await removeFromReviewPool(herbId);
-    }
-
-    _generateTodayReviews();
     await _saveRecords(); // 保存
     notifyListeners();
   }
@@ -294,9 +202,6 @@ class StudyService extends ChangeNotifier {
 
     _todayTasks.removeWhere((herb) => herb.id == herbId);
     await _saveTodayTasks(); // 第一次修改：每次移除后保存今日任务池
-    // 第二次修改：加入复习池
-    await addToReviewPool(herbId);
-    _generateTodayReviews();
     await _saveRecords(); // 保存
     notifyListeners();
   }
@@ -316,7 +221,7 @@ class StudyService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('dailyTaskCount', count);
     _generateTodayTasksIfNeeded(force: true); // 重新生成今日任务池
-    _generateTodayReviews();
+    await _saveTodayTasks();
     notifyListeners();
   }
 

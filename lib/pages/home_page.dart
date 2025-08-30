@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/study_service.dart';
+import '../services/review_service.dart';
 import '../widgets/progress_bar.dart';
+import '../services/study_service.dart';
 // 如果有调试面板，取消下一行注释
 // import '../widgets/dev_time_test_panel.dart';
 
@@ -13,12 +14,25 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  void _showPlanDialog(BuildContext context) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 触发Provider刷新，确保进度条数据最新
+    // ignore: unused_local_variable
     final studyService = Provider.of<StudyService>(context, listen: false);
-    TextEditingController controller = TextEditingController(
-      text: studyService.dailyTaskCount.toString(),
-    );
+    // final reviewService = Provider.of<ReviewService>(context, listen: false);
+    // 通知监听者刷新（如果Service有刷新方法可调用）
+    // studyService.refresh();
+    // reviewService.refresh();
+    setState(() {});
+  }
 
+  // 实现“学习规划”功能：允许用户设置每日复习目标数量，并持久化到 ReviewService
+  void _showPlanDialog(BuildContext context) {
+    final reviewService = Provider.of<ReviewService>(context, listen: false);
+    final controller = TextEditingController(
+      text: reviewService.dailyTargetCount.toString(),
+    );
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -39,11 +53,11 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               child: const Text('保存'),
               onPressed: () {
-                int newDailyTaskCount =
-                    int.tryParse(controller.text) ??
-                    studyService.dailyTaskCount;
-                studyService.updateDailyTaskCount(newDailyTaskCount);
+                int newCount = int.tryParse(controller.text) ??
+                    reviewService.dailyTargetCount;
+                reviewService.updateDailyTargetCount(newCount);
                 Navigator.of(context).pop();
+                setState(() {}); // 触发刷新
               },
             ),
           ],
@@ -55,12 +69,17 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final studyService = Provider.of<StudyService>(context);
-
-    final percent = studyService.totalCount == 0
-        ? 0.0
-        : studyService.masteredCount / studyService.totalCount;
-    final percentText = (percent * 100).toStringAsFixed(1);
-
+    final reviewService = Provider.of<ReviewService>(context);
+    // 进度统计逻辑修正：
+    // 进度 = 总复习池数量 / 数据库中中药总数
+    // 数据库中中药总数（直接从 StudyService 获取）
+    final int totalHerbCount = studyService.totalCount;
+    // 总复习池数量
+    final int reviewedCount = reviewService.allReviewedIds.length;
+    // 进度百分比 = 总复习池数量 / 数据库中中药总数
+    final double percent =
+        totalHerbCount == 0 ? 0.0 : reviewedCount / totalHerbCount;
+    final String percentText = (percent * 100).toStringAsFixed(1);
     final int todayTaskCount = studyService.todayTasks.length;
 
     return Scaffold(
@@ -69,8 +88,6 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // 如需全局调试面板，取消下一行注释
-            //if (!bool.fromEnvironment('dart.vm.product')) const DevTimeTestPanel(),
             // 百分比
             Align(
               alignment: Alignment.center,
@@ -84,14 +101,12 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 8),
             // 总进度条
+            // mastered: 总复习池数量，total: 数据库中中药总数
             ProgressBar(
-              mastered: studyService.masteredCount,
-              total: studyService.totalCount,
+              mastered: reviewedCount,
+              total: totalHerbCount,
             ),
             const SizedBox(height: 32),
-
-            // 方案一：IntrinsicHeight + stretch + spaceBetween
-            // ...省略前面代码...
             Expanded(
               child: IntrinsicHeight(
                 child: Row(
@@ -109,20 +124,21 @@ class _HomePageState extends State<HomePage> {
                               constraints: const BoxConstraints(minHeight: 100),
                               padding: const EdgeInsets.all(16.0),
                               child: todayTaskCount == 0
-                                  ? Column(
+                                  // 全部掌握或今日任务已完成才显示“恭喜你..."
+                                  ? const Column(
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
+                                        Text(
                                           '今日任务',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
-                                        const Text(
+                                        SizedBox(height: 8),
+                                        Text(
                                           '恭喜你，今日学习任务已完成！',
                                           style: TextStyle(
                                             fontSize: 16,
@@ -144,8 +160,9 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ),
                                         const SizedBox(height: 8),
+                                        // 显示今日学习池的中药数量
                                         Text(
-                                          '剩余 $todayTaskCount 个中药待学习',
+                                          '剩余 ${studyService.todayTasks.length} 个中药待学习',
                                           style: const TextStyle(fontSize: 16),
                                         ),
                                       ],
@@ -156,7 +173,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     // 右侧：按钮列，学习规划按钮与卡片上缘对齐
-                    // ...前略...
                     SizedBox(
                       width: 120,
                       child: Column(
@@ -185,7 +201,8 @@ class _HomePageState extends State<HomePage> {
                                 context: context,
                                 builder: (ctx) => AlertDialog(
                                   title: const Text('确定重置吗？'),
-                                  content: const Text('此操作将清空所有学习进度，无法恢复。'),
+                                  content:
+                                      const Text('此操作将清空所有本地学习和复习数据，无法恢复。'),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
@@ -200,15 +217,20 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               );
                               if (confirm == true) {
-                                await Provider.of<StudyService>(
-                                  context,
-                                  listen: false,
-                                ).clearRecords();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('学习进度已重置')),
-                                  );
-                                }
+                                final reviewService =
+                                    Provider.of<ReviewService>(context,
+                                        listen: false);
+                                final studyService = Provider.of<StudyService>(
+                                    context,
+                                    listen: false);
+                                final mounted = context.mounted;
+                                if (!mounted) return;
+                                await reviewService.clearAllRecords();
+                                await studyService.clearRecords();
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('一切重新开始')),
+                                );
                               }
                             },
                             child: const Text('重置进度'),
@@ -216,7 +238,6 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                    // ...后略...
                   ],
                 ),
               ),

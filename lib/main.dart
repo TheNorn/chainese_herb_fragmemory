@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_bugly/flutter_bugly.dart';
+// import 'package:flutter_bugly/flutter_bugly.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chinese_herb_framery/pages/home_page.dart';
 import 'package:chinese_herb_framery/pages/learn_page.dart';
 import 'package:chinese_herb_framery/pages/review_page.dart';
 import 'package:chinese_herb_framery/pages/detail_page.dart';
-import 'package:chinese_herb_framery/pages/splash_page.dart'; // 导入自定义 GIF 动画开屏页
+// import 'package:chinese_herb_framery/pages/splash_page.dart';
+import 'package:chinese_herb_framery/services/review_service.dart';
 import 'package:chinese_herb_framery/services/study_service.dart';
+import 'utils/herb_loader.dart';
+import 'models/herb.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  FlutterBugly.init(androidAppId: "", iOSAppId: "57d56b24d6");
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AppState()),
-        ChangeNotifierProvider(create: (_) => StudyService()..init()),
-      ],
-      child: MyApp(),
-    ),
-  );
+  // 加载所有中药数据
+  final herbsMap = await loadAllHerbs();
+  runApp(MyApp(herbsMap: herbsMap));
 }
 
 class AppState extends ChangeNotifier {
@@ -35,45 +31,34 @@ class AppState extends ChangeNotifier {
 }
 
 /// 应用主入口，负责显示开屏动画和主路由
+
 class MyApp extends StatefulWidget {
-  MyApp({super.key});
+  final Map<int, Herb> herbsMap;
+  const MyApp({super.key, required this.herbsMap});
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  bool _showSplash = true; // 是否显示开屏动画
-
-  @override
-  void initState() {
-    super.initState();
-    // 延时 2.5 秒后关闭 splash，显示主页面
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      setState(() {
-        _showSplash = false;
-      });
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (_showSplash) {
-      // 显示 GIF 动画开屏页
-      return const MaterialApp(
-        home: SplashPage(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppState()),
+        Provider<Map<int, Herb>>.value(value: widget.herbsMap),
+        ChangeNotifierProvider(create: (_) => StudyService()),
+        ChangeNotifierProvider(create: (_) => ReviewService()..init()),
+      ],
+      child: MaterialApp.router(
+        title: '中药速记',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+          useMaterial3: true,
+        ),
+        routerConfig: _router,
         debugShowCheckedModeBanner: false,
-      );
-    }
-    // 显示主应用（带路由）
-    return MaterialApp.router(
-      title: '中药速记',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
       ),
-      routerConfig: _router,
-      debugShowCheckedModeBanner: false,
     );
   }
 

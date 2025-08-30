@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/study_service.dart';
 import '../models/herb.dart';
+import '../services/study_service.dart';
 
 class LearnPage extends StatefulWidget {
   const LearnPage({super.key});
@@ -12,12 +12,21 @@ class LearnPage extends StatefulWidget {
 }
 
 class _LearnPageState extends State<LearnPage> {
+  // 当前学习卡片索引
   int _currentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // 只依赖 StudyService，所有今日学习池相关状态由 service 统一管理
     final studyService = Provider.of<StudyService>(context);
     final todayTasks = studyService.todayTasks;
+
+    // 今日任务池为空时，显示“已完成”界面
 
     if (todayTasks.isEmpty) {
       return Scaffold(
@@ -30,16 +39,14 @@ class _LearnPageState extends State<LearnPage> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
-                  // 获取所有未掌握且未在今日任务池的中药
-                  final masteredIds = studyService.records
-                      .where((r) => r.mastered)
-                      .map((r) => r.herbId)
-                      .toSet();
-                  final allUnmastered = studyService.allHerbs
-                      .where((herb) => !masteredIds.contains(herb.id))
+                  // 直接调用 StudyService 的“再学一点”功能，自动补充未掌握中药
+                  final allHerbs = studyService.allHerbs;
+                  final existingIds = todayTasks.map((h) => h.id).toSet();
+                  final unmastered = allHerbs
+                      .where((herb) => !existingIds.contains(herb.id))
                       .toList();
-                  allUnmastered.shuffle(Random());
-                  final nextFive = allUnmastered.take(5).toList();
+                  unmastered.shuffle(Random());
+                  final nextFive = unmastered.take(5).toList();
                   studyService.addToTodayTasks(nextFive);
                   setState(() {
                     _currentIndex = 0;
@@ -158,6 +165,8 @@ class _LearnPageState extends State<LearnPage> {
     );
   }
 
+  //
+
   /// 只在“我知道”+“记住了”时移除当前中药，其他情况保留
   void _goToDetail(BuildContext context, Herb herb, bool know) async {
     final remembered = await Navigator.push<bool>(
@@ -168,24 +177,21 @@ class _LearnPageState extends State<LearnPage> {
     );
 
     final studyService = Provider.of<StudyService>(context, listen: false);
-
-    setState(() {
-      if (know && remembered == true) {
-        // 只有“我知道”+“记住了”才移除
-        studyService.markAsMastered(herb.id);
-        // 不需要手动移除，Provider会自动刷新todayTasks
-        // 保证索引安全
+    if (know && remembered == true) {
+      studyService.markAsMastered(herb.id);
+      setState(() {
         if (_currentIndex >= studyService.todayTasks.length &&
             studyService.todayTasks.isNotEmpty) {
           _currentIndex = studyService.todayTasks.length - 1;
         }
-      } else {
-        // 其他情况，切换到下一个任务
+      });
+    } else {
+      setState(() {
         if (studyService.todayTasks.isNotEmpty) {
           _currentIndex = (_currentIndex + 1) % studyService.todayTasks.length;
         }
-      }
-    });
+      });
+    }
   }
 }
 
