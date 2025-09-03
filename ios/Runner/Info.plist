@@ -47,5 +47,16 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>需要访问相册用于保存和读取图片</string>
+	<key>NSCameraUsageDescription</key>
+	<string>需要访问相机用于拍照</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>需要访问文件用于存储数据</string>
 </dict>
 </plist>

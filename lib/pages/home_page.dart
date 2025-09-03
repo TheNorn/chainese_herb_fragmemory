@@ -17,19 +17,16 @@ class _HomePageState extends State<HomePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 触发Provider刷新，确保进度条数据最新
-    // ignore: unused_local_variable
-    final studyService = Provider.of<StudyService>(context, listen: false);
-    // final reviewService = Provider.of<ReviewService>(context, listen: false);
-    // 通知监听者刷新（如果Service有刷新方法可调用）
-    // studyService.refresh();
-    // reviewService.refresh();
+    // 监听 StudyService 和 ReviewService，确保每次切换到 HomePage 时刷新
+    Provider.of<StudyService>(context);
+    Provider.of<ReviewService>(context);
     setState(() {});
   }
 
   // 实现“学习规划”功能：允许用户设置每日复习目标数量，并持久化到 ReviewService
   void _showPlanDialog(BuildContext context) {
     final reviewService = Provider.of<ReviewService>(context, listen: false);
+    final studyService = Provider.of<StudyService>(context, listen: false);
     final controller = TextEditingController(
       text: reviewService.dailyTargetCount.toString(),
     );
@@ -52,10 +49,12 @@ class _HomePageState extends State<HomePage> {
             ),
             TextButton(
               child: const Text('保存'),
-              onPressed: () {
+              onPressed: () async {
                 int newCount = int.tryParse(controller.text) ??
                     reviewService.dailyTargetCount;
                 reviewService.updateDailyTargetCount(newCount);
+                await studyService
+                    .updateDailyTaskCount(newCount); // 同步更新学习池数量并刷新
                 Navigator.of(context).pop();
                 setState(() {}); // 触发刷新
               },

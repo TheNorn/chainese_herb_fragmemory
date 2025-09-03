@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/herb.dart';
 import '../services/study_service.dart';
+import '../services/review_service.dart';
 
 class LearnPage extends StatefulWidget {
   const LearnPage({super.key});
@@ -165,8 +166,6 @@ class _LearnPageState extends State<LearnPage> {
     );
   }
 
-  //
-
   /// 只在“我知道”+“记住了”时移除当前中药，其他情况保留
   void _goToDetail(BuildContext context, Herb herb, bool know) async {
     final remembered = await Navigator.push<bool>(
@@ -177,8 +176,10 @@ class _LearnPageState extends State<LearnPage> {
     );
 
     final studyService = Provider.of<StudyService>(context, listen: false);
+    final reviewService = Provider.of<ReviewService>(context, listen: false);
     if (know && remembered == true) {
       studyService.markAsMastered(herb.id);
+      await reviewService.addToAllReviewed(herb.id); // 同步进入复习池
       setState(() {
         if (_currentIndex >= studyService.todayTasks.length &&
             studyService.todayTasks.isNotEmpty) {
