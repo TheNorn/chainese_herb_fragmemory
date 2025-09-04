@@ -1,12 +1,12 @@
 PODS:
   - Flutter (1.0.0)
-  - path_provider_foundation (0.0.1):
+  - path_provider_foundation (2.4.2):
     - Flutter
     - FlutterMacOS
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - sqflite_darwin (0.0.4):
+  - sqflite (0.0.3):
     - Flutter
     - FlutterMacOS
 
@@ -14,7 +14,7 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
+  - sqflite (from `.symlinks/plugins/sqflite/darwin`)
 
 EXTERNAL SOURCES:
   Flutter:
@@ -23,15 +23,15 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
-  sqflite_darwin:
-    :path: ".symlinks/plugins/sqflite_darwin/darwin"
+  sqflite:
+    :path: ".symlinks/plugins/sqflite/darwin"
 
 SPEC CHECKSUMS:
-  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  path_provider_foundation: a32d304f4716e834624e7ce1fee42f1b3b665830
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
-  sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
+  sqflite: c35dad70033b8862124f8337cc994a809fcd9fa3
 
-PODFILE CHECKSUM: a57f30d18f102dd3ce366b1d62a55ecbef2158e5
+PODFILE CHECKSUM: 5427e467909dd59b2816a541e661dc0216cb7133
 
 COCOAPODS: 1.16.2
