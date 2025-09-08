@@ -1,0 +1,36 @@
+workflows:
+  ios-workflow:
+    name: iOS Build
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: 升级 Flutter SDK 到最新版
+        script: |
+          flutter channel stable
+          flutter upgrade
+      - name: 清理并重新拉取依赖（iOS/Android 通用）
+        script: |
+          flutter clean
+          flutter pub get
+      - name: 修复 path_provider_foundation podspec 版本号（仅 iOS）
+        script: |
+          PODSPEC="ios/.symlinks/plugins/path_provider_foundation/darwin/path_provider_foundation.podspec"
+          if [ -f "$PODSPEC" ]; then
+            echo "Before fix:"
+            grep "s.version" "$PODSPEC"
+            sed -i '' "s/s.version          = '0.0.1'/s.version          = '2.4.2'/" "$PODSPEC"
+            echo "After fix:"
+            grep "s.version" "$PODSPEC"
+          else
+            echo "No path_provider_foundation.podspec found, skip fix."
+          fi
+      - name: CocoaPods install（仅 iOS）
+        script: |
+          cd ios
+          pod install --repo-update
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/ipa/*.dSYM.zip
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
