@@ -13,6 +13,10 @@ workflows:
         script: |
           flutter clean
           flutter pub get
+      - name: 升级 CocoaPods 版本（仅 iOS）
+        script: |
+          sudo gem install cocoapods -v 1.14.3
+          pod --version
       - name: 修复 path_provider_foundation podspec 版本号（仅 iOS）
         script: |
           PODSPEC="ios/.symlinks/plugins/path_provider_foundation/darwin/path_provider_foundation.podspec"
@@ -34,3 +38,7 @@ workflows:
       - build/ios/ipa/*.dSYM.zip
       - build/app/outputs/flutter-apk/*.apk
       - build/app/outputs/bundle/release/*.aab
+       publishing:
+         app_store_connect:
+          api_key: testkey001
+          submit_to_testflight: true
