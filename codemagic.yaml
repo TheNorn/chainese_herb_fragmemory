@@ -41,4 +41,6 @@ workflows:
     publishing:
       app_store_connect:
         api_key: testkey001
+        key_id: D59J8U57DX
+        issuer_id: 613e5fac-bfbb-443b-a15c-25b7033ea515
         submit_to_testflight: true
