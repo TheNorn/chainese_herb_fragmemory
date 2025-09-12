@@ -38,7 +38,7 @@ workflows:
       - build/ios/ipa/*.dSYM.zip
       - build/app/outputs/flutter-apk/*.apk
       - build/app/outputs/bundle/release/*.aab
-       publishing:
-         app_store_connect:
-          api_key: testkey001
-          submit_to_testflight: true
+    publishing:
+      app_store_connect:
+        api_key: testkey001
+        submit_to_testflight: true
