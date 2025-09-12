@@ -33,6 +33,9 @@ workflows:
         script: |
           cd ios
           pod install --repo-update
+      - name: 构建 iOS Release 包
+        script: |
+          flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/ipa/*.dSYM.zip
