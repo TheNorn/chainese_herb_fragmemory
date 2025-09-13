@@ -4,10 +4,6 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-    code_signing:
-      certificates:
-        - ios_distribution_cert
-      certificate_password: 123456
     scripts:
       - name: 升级 Flutter SDK 到最新版
         script: |
