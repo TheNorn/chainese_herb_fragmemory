@@ -13,6 +13,12 @@ workflows:
         script: |
           flutter clean
           flutter pub get
+      - name: 彻底清理 iOS 构建缓存
+        script: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ios/Pods
+          rm -rf ios/.symlinks
+          rm -rf ios/Flutter/Flutter.framework
       - name: 升级 CocoaPods 版本（仅 iOS）
         script: |
           sudo gem install cocoapods -v 1.14.3
