@@ -41,7 +41,7 @@ workflows:
           pod install --repo-update
       - name: 构建 iOS Release 包
         script: |
-          flutter build ipa --release
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/ipa/*.dSYM.zip
