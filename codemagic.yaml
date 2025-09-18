@@ -39,6 +39,9 @@ workflows:
         script: |
           cd ios
           pod install --repo-update
+      - name: 移除 macOS target（如有）
+        script: |
+          sed -i '' '/macOS/d' ios/Runner.xcodeproj/project.pbxproj
       - name: 构建 iOS Release 包
         script: |
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
